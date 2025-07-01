@@ -1,0 +1,51 @@
+name: 构建与发布
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号 (例如: v1.0.0)'
+        required: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: 设置 Git
+        run: |
+          git config --global core.autocrlf false
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+      
+      - name: 克隆私有仓库
+        run: |
+          git clone https://${{ secrets.PAT_TOKEN }}@github.com/winezer0/X-SAST.git
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+        
+      - name: 设置 Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+          
+      - name: 安装 PyInstaller 和依赖
+        run: |
+          cd X-SAST
+          pip install pyinstaller==6.13.0
+          pip install -r requirements.txt
+          
+      - name: 运行构建脚本
+        run: |
+          cd X-SAST
+          .\XX_Build.bat
+          
+      - name: 创建发布
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.version }}
+          name: 发布 ${{ github.event.inputs.version }}
+          files: X-SAST/dist/*
+          token: ${{ secrets.GITHUB_TOKEN }}
+          draft: false
+          prerelease: false 

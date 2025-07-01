@@ -47,7 +47,7 @@ jobs:
       - name: 运行构建脚本
         run: |
           cd X-SAST
-          .\XX_Build.bat
+          .\XX_Build_PUBLIC.bat
           
       - name: 创建发布
         uses: softprops/action-gh-release@v1

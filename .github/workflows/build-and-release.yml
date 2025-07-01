@@ -11,18 +11,20 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
+      # 首先检出当前仓库，以便后续操作
+      - name: 检出当前仓库
+        uses: actions/checkout@v4
+
       - name: 设置 Git
         run: |
           git config --global core.autocrlf false
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
       
-      - name: 检出代码
-        uses: actions/checkout@v4
-        with:
-          repository: winezer0/X-SAST
-          token: ${{ secrets.PAT_TOKEN }}
-          path: X-SAST
+      # 使用 GITHUB_TOKEN 克隆私有仓库
+      - name: 克隆 X-SAST 仓库
+        run: |
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/winezer0/X-SAST.git
         
       - name: 设置 Python
         uses: actions/setup-python@v4

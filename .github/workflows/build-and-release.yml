@@ -7,6 +7,10 @@ on:
         description: '版本号 (例如: v1.0.0)'
         required: true
 
+# 添加权限配置
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
@@ -51,6 +55,6 @@ jobs:
           tag_name: ${{ github.event.inputs.version }}
           name: 发布 ${{ github.event.inputs.version }}
           files: X-SAST/dist/*
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN }}  # 使用 PAT_TOKEN 替代 GITHUB_TOKEN
           draft: false
           prerelease: false 

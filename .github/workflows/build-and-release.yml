@@ -1,4 +1,4 @@
-name: 构建与发布
+name: build_and_release
 
 on:
   workflow_dispatch:
@@ -17,11 +17,12 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
       
-      - name: 克隆私有仓库
-        run: |
-          git clone https://${{ secrets.PAT_TOKEN }}@github.com/winezer0/X-SAST.git
-        env:
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          repository: winezer0/X-SAST
+          token: ${{ secrets.PAT_TOKEN }}
+          path: X-SAST
         
       - name: 设置 Python
         uses: actions/setup-python@v4

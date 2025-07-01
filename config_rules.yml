@@ -1,0 +1,868 @@
+languages:
+  - language: ANY
+    vulnerabilities:
+      - rule_name: Cloud Key
+        vuln_type: 敏感信息
+        patterns:
+          - (?:(?:access)(?:[-_])(?:key)(?:[-_])(?:id|secret))
+        description: 在源代码中找到的硬编码云访问密钥或秘密。
+        severity: HIGH
+        sample_code: |
+          // Example
+          const access_key_id = "your_access_key";
+          const access_key_secret = "your_secret_key";
+        loaded: true
+        ignore_case: true
+        related_suffixes: '*'
+        context_before: 200
+        context_after: 200
+        context_need: false
+      - rule_name: Aliyun Access Key
+        vuln_type: 敏感信息
+        patterns:
+          - (?:LTAI[a-z0-9]{12,20})
+        description: 在源代码中发现硬编码的Aliyun（阿里云）访问密钥。
+        severity: HIGH
+        sample_code: |
+          // Example in PHP
+          $cloudKey = "LTAI4XXXXXXXXXXXXXXX";
+          // Example in JavaScript
+          const cloudKey = 'LTAI4XXXXXXXXXXXXXXX';
+          // Example in Python
+          cloud_key = 'LTAI4XXXXXXXXXXXXXXX'
+        loaded: true
+        ignore_case: true
+        related_suffixes: '*'
+        context_before: 200
+        context_after: 200
+        context_need: false
+      - rule_name: Tencent Cloud Key
+        vuln_type: 敏感信息
+        patterns:
+          - (?:AKID[a-zA-Z0-9]{32})
+        description: 在源代码中找到硬编码的腾讯云（COS）访问密钥。
+        severity: HIGH
+        sample_code: |
+          // Example in PHP
+          $secretId = "AKIDxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+          // Example in JavaScript
+          const secretId = 'AKIDxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+          // Example in Python
+          secret_id = 'AKIDxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+        loaded: true
+        ignore_case: true
+        related_suffixes: '*'
+        context_before: 200
+        context_after: 200
+        context_need: false
+      - rule_name: Hardcoded Credentials
+        vuln_type: 敏感信息
+        patterns:
+          - (?:(?:["\'](username|user|password|passwd)["\']|(?:username|user|password|passwd))\s*[=:]\s*["\']([a-zA-Z0-9_-]+)["\'])
+        description: 在源代码中找到的硬编码用户名或密码。
+        severity: MEDIUM
+        sample_code: |
+          // 示例代码
+          username = "admin"
+          password = "123456"
+          const user = 'root'
+          "username":"admin"
+          'password':'admin123'
+        loaded: true
+        ignore_case: true
+        related_suffixes: '*'
+        context_before: 200
+        context_after: 200
+        context_need: false
+  - language: PHP
+    vulnerabilities:
+      - rule_name: File Inclusion (RFI|LFI)
+        vuln_type: 文件包含
+        patterns:
+          - \b(include|require)(_once){0,1}(\s{1,5}|\s{0,5}\().{0,60}\$(?!.*(this->))\w{1,20}((\[["']|\[)\${0,1}[\w\[\]"']{0,30}){0,1}
+        description: 在PHP中，如果在include/require等导入语句中使用了用户可控的变量，则可能存在远程文件或本地文件包含漏洞
+        severity: HIGH
+        sample_code: |
+          <?php
+          $file = $_GET['file'];
+          include($file);
+          ?>
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: SQL Injection By Method (SQLI)
+        vuln_type: SQL注入
+        patterns:
+          - \b(mysql_query|mysqli_query|PDO::query|PDO::exec|pg_query|sqlite_query|db_query)(?:\s*\()([^()]+)(?:\))
+        description: 在PHP代码中构建SQL查询时，如果直接将用户输入插入到SQL语句的条件部分而没有适当的转义或使用参数化查询/预处理语句，就可能存在SQL注入漏洞。
+        severity: HIGH
+        sample_code: |
+          <?php
+          $username = $_POST['username'];
+          $query = "SELECT * FROM users WHERE username = '$username'";
+          mysql_query($query);
+          ?>
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: Command Injection (RCI)
+        patterns:
+          - \b(assert|escapeshellcmd|eval|exe|exec|passthru|pcntl_exec|popen|proc_open|shell_exec|system)\s{0,10}\(.{0,40}\$\w{1,20}((\[["']|\[)\${0,1}[\w\[\]"']{0,30}){0,1}
+          - '`[\w\s]*\$\w{1,20}((\[["'']|\[)\${0,1}[\w\[\]"'']{0,30}){0,1}`'
+        description: |
+          assert、eval等命令执行函数中存在变量，可能存在任意命令执行漏洞。
+          反引号中包含变量，变量可控会导致命令执行漏洞
+        severity: HIGH
+        sample_code: |-
+          <?php
+          $command = $_GET['cmd'];
+          exec($command);
+          ?>
+
+
+          <?php
+          $cmd = $_GET['cmd'];
+          $safe_cmd = escapeshellarg($cmd); // 对输入进行转义
+          $output = `ls $safe_cmd`;
+          echo "Command Output: $output";
+          ?>
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: false
+        vuln_type: 命令注入
+      - rule_name: File Upload (FU)
+        vuln_type: 文件上传
+        patterns:
+          - \b(move_uploaded_file|file_put_contents)\s*\(.{0,20}\$.{0,40}\$.{0,20};
+        description: 如果服务端对用户上传的文件在移动之前没有进行格式验证和清理，则可能存在文件上传漏洞。
+        severity: HIGH
+        sample_code: |
+          <?php
+          $target_dir = "uploads/";
+          $target_file = $target_dir . basename($_FILES["fileToUpload"]["name"]);
+          move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file);
+          ?>
+
+
+          <?php
+          if ($_FILES['file']['error'] === UPLOAD_ERR_OK) {
+              $tmp_name = $_FILES['file']['tmp_name'];
+              $target = "uploads/" . $_FILES['file']['name'];
+              move_uploaded_file($tmp_name, $target);
+          }
+          ?>
+
+          <?php
+          $content = $_POST['content'];
+          file_put_contents('output.txt', $content);
+          ?>
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: Sensitive Information Leakage (SIL)
+        vuln_type: 敏感信息
+        patterns:
+          - \b(var_dump|print_r|var_export)\s*\(((?:[^()]|\([^()]*\))*)\)
+          - \b(phpinfo)\s{0,5}\(\s{0,5}\)
+        description: 如果在生产代码中使用调试函数，可能会泄露敏感信息。
+        severity: MEDIUM
+        sample_code: |
+          <?php
+          $data = array("key" => "value");
+          var_dump($data);
+
+          phpinfo();
+          ?>
+        loaded: false
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: false
+      - rule_name: Code Execution By preg_replace (RCE)
+        vuln_type: 代码执行
+        patterns:
+          - \b(preg_replace)\(\s{0,5}.*/[is]{0,2}e[is]{0,2}["']\s{0,5},(.*\$.*,|.*,.*\$)
+        description: |-
+          在PHP中，如果 preg_replace 使用/e模式，且有可控变量，可能存在代码执行漏洞。
+          PHP5.5.0及以上/e修饰符已被提示废弃, PHP7及以上/e修饰符被完全移除。
+        severity: HIGH
+        sample_code: |
+          <?php
+          $var = "phpinfo();";
+          preg_replace('/test/e', $var, 'test');
+          ?>
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: Code Execution By call_user_func (RCE)
+        vuln_type: 代码执行
+        patterns:
+          - \bcall_user_func(_array){0,1}\(\s{0,5}\$\w{1,15}((\[["']|\[)\${0,1}[\w\[\]"']{0,30}){0,1}
+        description: PHP 中，如果 call_user_func 是的动态回调参数（callback）包含用户可控的变量，并且没有经过严格的验证和过滤，就可能导致
+          代码执行漏洞 或其他安全问题。
+        severity: HIGH
+        sample_code: |-
+          <?php
+          // 假设用户输入存储在 $_GET['func'] 中
+          $function = $_GET['func'];
+          $param = "Hello, World!";
+
+          // 动态调用用户指定的函数
+          call_user_func($function, $param);
+          ?>
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: File Read (FR)
+        vuln_type: 文件读取
+        patterns:
+          - \b(file_get_contents|fopen|readfile|fgets|fread|parse_ini_file|highlight_file|fgetss|show_source|bzopen)\s{0,5}\(.{0,40}\$\w{1,15}((\[["']|\[)\${0,1}[\w\[\]"']{0,30}){0,1}
+        description: 在PHP中，如果文件读取函数中使用了用户可控的变量，则可能存在任意文件读取漏洞
+        severity: HIGH
+        sample_code: |-
+          <?php
+          // 假设用户通过 URL 传递文件路径
+          $file = $_GET['file'];
+
+          // 检查文件是否存在并读取内容
+          if (file_exists($file)) {
+              echo "File Content:<br>";
+              echo file_get_contents($file);
+          } else {
+              echo "File not found!";
+          }
+          ?>
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: Variable coverage (VC)
+        vuln_type: 暂未分类
+        patterns:
+          - \b(mb_){0,1}parse_str\s{0,10}\(.{0,40}\$\w{1,20}((\[["']|\[)\${0,1}[\w\[\]"']{0,30}){0,1}
+          - \b(extract)\s{0,5}\(.{0,30}\$\w{1,20}((\[["']|\[)\${0,1}[\w\[\]"']{0,30}){0,1}\s{0,5},{0,1}\s{0,5}(EXTR_OVERWRITE){0,1}\s{0,5}\)
+          - \${{0,1}\$\w{1,20}((\[["']|\[)\${0,1}[\w\[\]"']{0,30}){0,1}\s{0,4}=\s{0,4}.{0,20}\$\w{1,20}((\[["']|\[)\${0,1}[\w\[\]"']{0,30}){0,1}
+        description: |-
+          PHP extract 函数会从数组中提取变量并注册为当前作用域中的变量。如果数组中的键名与现有变量冲突，就会发生覆盖。
+          PHP parse_str函数中存在变量,可能存在变量覆盖漏洞。
+          PHP 双$$符号可能存在变量覆盖漏洞。
+        severity: HIGH
+        sample_code: |-
+          <?php
+          // 假设用户通过 URL 提交参数
+          $query_string = $_SERVER['QUERY_STRING'];
+
+          // 使用 parse_str 解析查询字符串
+          parse_str($query_string);
+
+          // 输出重要变量
+          echo "Admin: $admin<br>";
+          ?>
+          ======================
+          <?php
+          $data = [
+              'admin' => true,
+              'username' => 'guest',
+          ];
+
+          // 注册变量
+          extract($data);
+
+          // 检查权限
+          if ($admin) {
+              echo "You are an admin!";
+          } else {
+              echo "You are a guest.";
+          }
+          ?>
+          ======================
+          <?php
+          $key = $_GET['key'];
+          $value = $_GET['value'];
+
+          // 动态创建变量
+          $$key = $value;
+
+          echo "Variable: $admin<br>";
+          ?>
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: Source IP Forgery (SIF)
+        vuln_type: 暂未分类
+        patterns:
+          - '["''](HTTP_CLIENT_IP|HTTP_X_FORWARDED_FOR|HTTP_REFERER)["'']'
+        description: 在PHP中,如果获取IP地址来源HTTP_REFERER等用户可控的请求头不中，说明源用户IP可能被伪造。
+        severity: MEDIUM
+        sample_code: |-
+          <?php
+          // 获取客户端 IP 地址
+          function getClientIP() {
+              if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+                  return $_SERVER['HTTP_X_FORWARDED_FOR'];
+              } elseif (!empty($_SERVER['REMOTE_ADDR'])) {
+                  return $_SERVER['REMOTE_ADDR'];
+              } else {
+                  return 'Unknown';
+              }
+          }
+
+          // 获取 HTTP_REFERER
+          $referer = $_SERVER['HTTP_REFERER'] ?? 'Unknown';
+
+          // 模拟保存访问日志到数据库
+          $ip = getClientIP();
+
+          ?>
+        loaded: false
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: Variable coverage (VC) old
+        vuln_type: 暂未分类
+        patterns:
+          - \bregister_globals\s*=\s*(?i:on|1)\b
+          - \bimport_request_variables\s*\(['"]?[gpc]{1,3}['"]?
+        description: |-
+          在 PHP 5.4.0以下版本中，如果register_globals启用, 所有$_GET、$_POST、$_COOKIE 等超全局变量都会被自动注册为全局变量, 会导致严重的变量覆盖漏洞。
+          在 PHP 5.4.0以上版本中，import_request_variables 函数会将 $_GET、$_POST 或 $_COOKIE 中的变量导入到全局作用域中。
+        severity: HIGH
+        sample_code: "// 模拟 php.ini \n$php_ini_content = \"\n; Some comments\nregister_globals\
+          \ = On\n; Another comment\nregister_globals=1\nexpose_php = Off\n\n<?php\n\
+          import_request_variables('gp');\n$var = $_GET['key'];\nimport_request_variables(\"\
+          G\", \"prefix_\");\n?>"
+        loaded: false
+        ignore_case: true
+        related_suffixes: .php|.ini
+        context_before: 700
+        context_after: 300
+        context_need: false
+      - rule_name: File Write (FR)
+        vuln_type: 文件写入
+        patterns:
+          - \b(copy|fwrite|file_put_contents)\s{0,10}\(.{0,40}\$\w{1,20}((\[["']|\[)\${0,1}[\w\[\]"']{0,30}){0,1}
+        description: 在PHP中，如果文件操作函数中存在用户可控的变量，可能存在任意文件写入|修改等漏洞
+        severity: HIGH
+        sample_code: |-
+          <?php
+          // 用户输入的文件路径（危险）
+          $file = $_GET['file']; // 例如：?file=config.php
+
+          // 用户输入的内容（危险）
+          $content = $_POST['content']; // 用户提交的内容
+
+          // 使用 file_put_contents 写入文件
+          if (file_put_contents($file, $content) !== false) {
+              echo "数据成功写入文件！";
+          } else {
+              echo "写入文件失败！";
+          }
+          ?>
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: Code Execution By Backdoor (RCE)
+        vuln_type: 代码执行
+        patterns:
+          - \$_(POST|GET|REQUEST|COOKIE)\s*\[['"\w]{1,20}\]
+        description: PHP 中，代码能够执行用户输入的 PHP 函数代码，并且没有经过严格的验证和过滤，就可能导致 代码执行漏洞 或其他安全问题。
+        severity: HIGH
+        sample_code: |-
+          <?php
+          // 后门代码
+          $func = $_REQUEST['cmd']; // 从 GET/POST/COOKIE 中获取命令
+          $param = $_REQUEST['arg']; // 从 GET/POST/COOKIE 中获取参数
+
+          if ($func && function_exists($func)) {
+              echo "执行结果：<br>";
+              echo $func($param); // 动态调用函数
+          } else {
+              echo "无效命令！";
+          }
+          ?>
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: GPC Bypass (others)
+        patterns:
+          - \b(rawurldecode|urldecode|stripslashes)\s*\([^)]*?\$\w+(?:$['"][^'"]+['"]$)?[^)]*
+        description: |
+          在 PHP中，magic_quotes_gpc作用是自动对通过 GET、POST 和 COOKIE 接收到的用户输入添加反斜杠进行转义，以防止 SQL 注入等攻击。
+          urldecode编码会导致GPC绕过,stripslashes会取消GPC转义字符。
+          magic_quotes_gpc 在PHP 5.4.0版本已废弃。
+        severity: LOW
+        sample_code: |-
+          <?php
+          // 假设 magic_quotes_gpc = On
+          $input = $_GET['input']; // 输入被自动转义，例如 "O\'Reilly"
+
+          // 开发者错误地使用 stripslashes
+          $clean_input = stripslashes($input);
+
+          // 将输入用于数据库查询
+          $query = "SELECT * FROM users WHERE name = '$clean_input'";
+          echo $query;
+          ?>
+
+          <?php
+          // 假设 magic_quotes_gpc = On
+          $input = $_GET['input']; // 输入被自动转义，例如 "%27 OR 1=1 --"
+
+          // 开发者错误地使用 urldecode
+          $decoded_input = urldecode($input);
+
+          // 将输入用于数据库查询
+          $query = "SELECT * FROM users WHERE name = '$decoded_input'";
+          echo $query;
+          ?>
+        loaded: false
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+        vuln_type: 暂未分类
+      - rule_name: Code Execution By array_map (RCE)
+        vuln_type: 代码执行
+        patterns:
+          - \b(array_map)\s{0,4}\(\s{0,4}.{0,20}\$\w{1,20}((\[["']|\[)\${0,1}[\w\[\]"']{0,30}){0,1}\s{0,4}.{0,20},
+        description: PHP 中，如果 array_map 是的回调参数（callback）包含用户可控的变量，并且没有经过严格的验证和过滤，就可能导致
+          代码执行漏洞 或其他安全问题。
+        severity: HIGH
+        sample_code: |-
+          <?php
+          // 用户输入的回调函数
+          $callback = $_GET['callback']; // 例如：?callback=system
+
+          // 数据数组
+          $data = ['whoami', 'uname -a'];
+
+          // 使用 array_map 执行回调函数
+          $result = array_map($callback, $data);
+
+          // 输出结果
+          print_r($result);
+          ?>
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: Cross-Site Scripting (XSS)
+        vuln_type: 跨站脚本
+        patterns:
+          - \b(echo|print|print_r)\s{0,5}\({0,1}.{0,30}\$(_POST|_GET|_REQUEST|_SERVER|[\w]{1,20}).{1,10}\)?;
+        description: 在PHP中，如果echo等从服务器进行回西显示输出的方法参数中存在用户可控的变量，可能存在XSS漏洞。
+        severity: MEDIUM
+        sample_code: |-
+          <?php
+          // 假设从用户输入中获取了一个参数
+          $userInput = $_GET['input'];
+
+          // 直接将用户输入的内容输出到页面
+          echo "Hello, " . $_GET['input'];
+          ?>
+        loaded: false
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: Open redirection (OR)
+        patterns:
+          - \bheader\s{0,5}\(.{1,20}\$(_POST|_GET|_REQUEST|_SERVER|\w{1,20})\)\s{0,5};
+          - \bwindow\.location\.href\s{0,5}=\s{0,5}.{0,20}\$(_POST|_GET|_REQUEST|_SERVERR|\w{1,20})\s{0,5};
+        description: 在 PHP 中，如果 header 函数或 JavaScript 的 window.location.href 使用了用户可控的参数），可能会导致任意跳转漏洞或HTTP
+          头污染漏洞。
+        severity: LOW
+        sample_code: |-
+          <?php
+          // 假设从用户输入中获取了一个 URL 参数
+          $redirectUrl = $_GET['url'];
+
+          // 直接将用户输入的 URL 用于 header 跳转
+          header("Location: " . $redirectUrl);
+          exit;
+          ?>
+
+          <?php
+          // 假设从用户输入中获取了一个 URL 参数
+          $redirectUrl = $_GET['url'];
+          ?>
+
+          <script>
+          // 直接将用户输入的内容赋值给 window.location.href
+          window.location.href = "<?php echo $redirectUrl; ?>";
+          </script>
+        loaded: false
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+        vuln_type: 暂未分类
+      - rule_name: 'File Upload By Function (FU) '
+        vuln_type: 文件上传
+        patterns:
+          - \b\w{0,15}(upload)\w{0,5}\s{0,10}\(.{0,40}\$\w{1,20}((\[["']|\[)\${0,1}[\w\[\]"']{0,30}){0,1}\)
+        description: |
+          如果用户上传的文件在移动之前没有正确验证和清理，则可能存在文件上传漏洞。
+        severity: HIGH
+        sample_code: |-
+          <?php
+          $content = $_POST['content'];
+          upload('output.txt', $content);
+          ?>
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: File Upload By Laravel (FU)
+        vuln_type: 文件上传
+        patterns:
+          - \$[\w]{1,20}\s*->\s*store(As)?\s*\(.{0,20}\)
+        description: 如果用户上传的文件在移动之前没有正确验证和清理，则可能存在文件上传漏洞。
+        severity: HIGH
+        sample_code: "if ($request->hasFile('avatar')) {\n    $file = $request->file('avatar');\n\
+          \    $path = $file->store('avatars');\n}\n\nLaravel 常见上传文件相关函数：\n$request->file('fieldname')\
+          \  \n$file->store()\n$file->storeAs()\n"
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: File Upload By CodeIgniter (FU)
+        vuln_type: 文件上传
+        patterns:
+          - \$[\w]{1,20}\s*->\s*upload\s*->\s*(do_upload|data)\s*\(.{0,40}\)
+        description: 如果用户上传的文件在移动之前没有正确验证和清理，则可能存在文件上传漏洞。
+        severity: HIGH
+        sample_code: |-
+          if ($this->upload->do_upload('userfile')) {
+              $data = $this->upload->data();
+          }
+
+          CodeIgniter 常见上传文件相关函数:
+          $this->upload->do_upload('fieldname')
+          $this->upload->data()
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: File Upload By Zend (FU)
+        vuln_type: 文件上传
+        patterns:
+          - \$[\w]{1,20}\s*->\s*(receive|getFileInfo)\s*\(.{0,40}\)
+        description: |
+          如果用户上传的文件在移动之前没有正确验证和清理，则可能存在文件上传漏洞。
+        severity: HIGH
+        sample_code: |-
+          $adapter = new \Zend\File\Transfer\Adapter\Http();
+          $adapter->receive();
+          $files = $adapter->getFileInfo();
+
+          Zend Framework (Laminas) 常见上传文件相关函数
+          $adapter->receive()
+          $adapter->getFileInfo()
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: File Upload By CakePHP (FU)
+        vuln_type: 文件上传
+        patterns:
+          - \$[\w]{1,20}\s*->\s*moveTo\s*\(.{0,40}\)
+          - \$[\w]{1,20}\s*->\s*request\s*->\s*(getUploadedFiles)\s*\(.{0,40}\)
+          - \$[\w]{1,20}\s*->\s*getUploadedFile\s*\(.{0,40}\)
+        description: |
+          如果用户上传的文件在移动之前没有正确验证和清理，则可能存在文件上传漏洞。
+        severity: HIGH
+        sample_code: |
+          $file = $this->request->getUploadedFiles()['image'];
+          if ($file) {
+              $file->moveTo('/uploads/image.jpg');
+          }
+
+
+          CakePHP  常见上传文件相关函数
+          $this->request->getData('fieldname')
+          $this->request->getUploadedFiles()
+          $file->moveTo($targetPath)
+
+          Swoft 常见函数：
+          $request->getUploadedFile('fieldname')
+          $file->moveTo($directory)
+
+          Hyperf 常见函数：
+          $request->file('fieldname')
+          $file->moveTo($directory)
+
+          EasySwoole 常见函数：
+          $request->getUploadedFile('fieldname')
+          $file->moveTo($directory)
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: File Upload By Yii (FU)
+        vuln_type: 文件上传
+        patterns:
+          - \$[\w]{1,20}\s*->\s*file\s*->\s*saveAs\s*\(.{0,40}\)
+        description: 如果用户上传的文件在移动之前没有正确验证和清理，则可能存在文件上传漏洞。
+        severity: HIGH
+        sample_code: |-
+          if ($model->upload()) {
+              $model->file->saveAs('/uploads/photo.jpg');
+          }
+
+
+          Yii  常见上传文件相关函数
+          $model->file
+          $model->upload()
+          $file->saveAs($path)
+
+          \$[\w]{1,20}\s*->\s*(file|upload)\s*\(.{0,40}\)
+          \$[\w]{1,20}\s*->\s*file\s*->\s*saveAs\s*\(.{0,40}\)
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: File Upload By Yii2 (FU)
+        vuln_type: 文件上传
+        patterns:
+          - \$[\w]{1,20}\s*->\s*file\s*->\s*saveAs\s*
+        description: 如果用户上传的文件在移动之前没有正确验证和清理，则可能存在文件上传漏洞。
+        severity: HIGH
+        sample_code: |-
+          use yii\web\UploadedFile;
+
+          $model->file = UploadedFile::getInstance($model, 'image');
+          if ($model->file) {
+              $model->file->saveAs('/uploads/' . $model->file->baseName . '.' . $model->file->extension);
+          }
+
+
+
+          Yii 2 常见上传文件相关函数
+          $model->file = UploadedFile::getInstance($model, 'fieldname');
+          $model->file->saveAs($path)
+
+          UploadedFile\s*::\s*getInstance\s*\(.{0,40}\)
+          \$[\w]{1,20}\s*->\s*file\s*->\s*saveAs\s*
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: File Upload By ThinkPHP (FU)
+        vuln_type: 文件上传
+        patterns:
+          - \$[\w]{1,20}\s*->\s*move\s*\(.{0,40}\)
+        description: |
+          如果用户上传的文件在移动之前没有正确验证和清理，则可能存在文件上传漏洞。
+
+
+          PhalApi 常见函数：
+          $this->request()->getFile('fieldname')
+          $file->move($directory)
+
+
+          ThinkPHP 常见上传文件相关函数
+          request()->file('fieldname')
+          $file->move($directory)
+
+          request\s*\(\)\s*->\s*file\s*\(.{0,40}\)
+          \$[\w]{1,20}\s*->\s*move\s*\(.{0,40}\)
+        severity: HIGH
+        sample_code: |
+          $file = request()->file('image');
+          if ($file) {
+              $file->move('/uploads');
+          }
+
+          Symfony 常见上传文件相关函数:
+          $request->files->get('fieldname')
+          $uploadedFile->move($directory, $filename)
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: File Upload By QeePHP (FU)
+        vuln_type: 文件上传
+        patterns:
+          - \$[\w]{1,20}\s*->\s*(file|save)\s*\(.{0,40}\)
+        description: |
+          如果用户上传的文件在移动之前没有正确验证和清理，则可能存在文件上传漏洞。
+        severity: HIGH
+        sample_code: |-
+          $file = $request->file('avatar');
+          if ($file) {
+              $file->save('/uploads/avatar.jpg');
+          }
+
+          ThinkPHP 常见上传文件相关函数
+          request()->file('fieldname')
+          $file->move($directory)
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: UNSERIALIZE
+        vuln_type: 反序列化
+        patterns:
+          - \b(unserialize)\s{0,10}\(.{0,40}\$\w{1,20}((\[["']|\[)\${0,1}[\w\[\]"']{0,30}){0,1}
+        description: 如果在PHP代码中使用了反序列化函数（如 unserialize()），并且该函数的参数包含外部输入，那么就可能存在反序列化漏洞。
+        severity: HIGH
+        sample_code: |-
+          $data = unserialize($_GET['data']);
+
+          $userData = getUserDataFromDatabase($userId);
+          $data = unserialize($userData['preferences']);
+
+          $jsonData = file_get_contents('php://input');
+          $data = json_decode($jsonData, true);
+          $object = unserialize($data['serializedObject']);
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: File Delete (FD)
+        vuln_type: 文件删除
+        patterns:
+          - \b(unlink|rmdir)\s{0,10}\(.{0,40}\$\w{1,20}((\[["']|\[)\${0,1}[\w\[\]"']{0,30}){0,1}
+        description: 在 PHP 中，如果文件操作函数（如 unlink()、rmdir() 等）中存在不可信的输入作为参数，可能引发任意文件删除漏洞。
+        severity: HIGH
+        sample_code: |-
+          unlink($_GET['filename']);
+
+          $fileToDelete = getUserDataFromDatabase($userId)['fileToDelete'];
+          unlink($fileToDelete);
+
+          $jsonData = file_get_contents('php://input');
+          $data = json_decode($jsonData, true);
+          unlink($data['filename']);
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: SQL Injection By SQL (SQLI)
+        vuln_type: SQL注入
+        patterns:
+          - (select|delete)\s{1,4}.{1,60}from.{1,50}\bwhere\s{1,3}.{1,50}=["\s\.]{0,10}\$\w{1,20}((\[["']|\[)\${0,1}[\w\[\]"']{0,30}){0,1}
+          - insert\s{1,5}into\s{1,5}.{1,60}\$\w{1,20}((\[["']|\[)\${0,1}[\w\[\]"']{0,30}){0,1}
+          - update\s{1,4}.{1,30}\s{1,3}set\s{1,5}.{1,60}\$\w{1,20}((\[["']|\[)\${0,1}[\w\[\]"']{0,30}){0,1}
+        description: 在PHP代码中构建SQL查询时，如果直接将用户输入插入到SQL语句的条件部分而没有适当的转义或使用参数化查询/预处理语句，就可能存在SQL注入漏洞。
+        severity: HIGH
+        sample_code: |
+          <?php
+          // 不安全的做法
+          $username = $_POST['username'];
+          $query = "select * FROM users WHERE username = $username";
+          mysqli_query($conn, $query);
+
+          // 另一个不安全的例子
+          $id = $_GET['id'];
+          $query = "delete * FROM products WHERE id = $id";
+          mysqli_query($conn, $query);
+
+
+
+          // 不安全的做法
+          $name = $_POST['name'];
+          $age = $_POST['age'];
+          $query = "INSERT INTO users (name, age) VALUES ($name, $age)";
+          mysqli_query($conn, $query);
+
+          // 另一个不安全的例子
+          $title = $_POST['title'];
+          $description = $_POST['description'];
+          $query = "INSERT INTO articles (title, description) VALUES ('$title', '$description')";
+          mysqli_query($conn, $query);
+
+
+          // 不安全的做法
+          $id = $_POST['id'];
+          $newValue = $_POST['newValue'];
+          $query = "UPDATE users SET status = 'active' WHERE id = $id";
+          mysqli_query($conn, $query);
+
+          // 另一个不安全的例子
+          $username = $_GET['username'];
+          $newEmail = $_POST['newEmail'];
+          $query = "UPDATE users SET email = '$newEmail' WHERE username = '$username'";
+          mysqli_query($conn, $query);
+          ?>
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true
+      - rule_name: UNSERIALIZE By Phar
+        vuln_type: 反序列化
+        patterns:
+          - \b(file_exists|is_readable|is_writable|is_writeable|file_get_contents|file_put_contents|fopen|unlink|mkdir|rmdir|rename|copy)\s{0,10}\(.{0,40}\$\w{1,20}((\[["']|\[)\${0,1}[\w\[\]"']{0,30}){0,1}
+        description: 在PHP中，能够触发PHAR反序列化的函数主要是文件操作的函数。这是因为PHAR文件本质上是一个压缩包，它可以包含PHP代码，并且其元数据可以存储序列化的PHP对象。当这些文件通过特定的文件系统函数被访问时，如果存在不安全的反序列化操作，就可能触发反序列化漏洞。
+        severity: HIGH
+        sample_code: "<?php \n    class TestObject {\n        public function __destruct()\
+          \ {\n            echo 'Destruct called';\n        }\n    }\n\n    $filename\
+          \ = 'phar://phar.phar/test.txt';\n    file_get_contents($filename); \n?>"
+        loaded: true
+        ignore_case: true
+        related_suffixes: .php|.php3|.php5|.php7|.phtml|.pht|.php4|.phps
+        context_before: 700
+        context_after: 300
+        context_need: true

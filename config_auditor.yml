@@ -1,0 +1,29 @@
+editors:
+- args: -n {line} "{file}"
+  editor_name: Notepad++
+  enabled: true
+  exe: notepad++.exe
+  full_path: ''
+- args: -g "{file}:{line}"
+  editor_name: VSCode
+  enabled: true
+  exe: Code.exe
+  full_path: C:/ISEC/0X80_Editor_IDE/vscode-portable/app/Code.exe
+- args: '"{file}"'
+  editor_name: 记事本
+  enabled: true
+  exe: notepad.exe
+  full_path: ''
+- args: --line {line} "{file}"
+  editor_name: PHPStorm
+  enabled: true
+  exe: phpstorm64.exe
+  full_path: C:/Program Files/JetBrains/PhpStorm 2024.3.5/bin/phpstorm64.exe
+project:
+  analyse_file: C:/Users/WINDOWS/GithubProject/SAST_AI/default_project.d2fa80e5.checker.json
+  source_root: C:/Users/WINDOWS/Desktop/demo_app
+providers:
+  api_keys:
+  - sk-xxxxxxxxxxxxxxxxxxx
+  base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+  model_name: qwen-plus

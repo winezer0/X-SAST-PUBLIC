@@ -48,13 +48,13 @@ X-SAST 采用模块化设计，各组件可独立使用，也可协同工作：
 目前 X-SAST 以二进制形式发布，核心程序开源, 其他部分提供 Windows 平台的预编译可执行程序：
 
 - **X1_checker.exe**：规则检查引擎（命令行工具 开源）
-![X1](doc\X1.png)
+![X1](./doc/X1.png)
 - **X2_verifier.exe**：AI 验证引擎（命令行工具，需授权）
-![X2](doc\X2.png)
+![X2](./doc/X2.png)
 - **X3_auditor.exe**：人工审计工具（GUI 程序）
-![X3](doc\X3.png)
+![X3](./doc/X3.png)
 - **X9_editor.exe**：规则编辑器（GUI 程序 开源）
-![X9](doc\X9.png)
+![X9](./doc/X9.png)
 
 对于其他平台需求，可联系开发团队获取支持。
 

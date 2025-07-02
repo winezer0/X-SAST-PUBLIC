@@ -52,7 +52,10 @@ X-SAST 采用模块化设计，各组件可独立使用，也可协同工作：
 - **X2_verifier.exe**：AI 验证引擎（命令行工具，需授权）
 ![X2](./doc/X2.png)
 - **X3_auditor.exe**：人工审计工具（GUI 程序）
-![X3](./doc/X3.png)
+- X3载入X1结果示例 
+![X3+X1](./doc/X3-X1.png)
+- X3载入X2结果示例 
+![X3+X2](./doc/X3-X2.png)
 - **X9_editor.exe**：规则编辑器（GUI 程序 开源）
 ![X9](./doc/X9.png)
 

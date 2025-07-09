@@ -20,7 +20,7 @@ editors:
   exe: phpstorm64.exe
   full_path: C:/Program Files/JetBrains/PhpStorm 2024.3.5/bin/phpstorm64.exe
 project:
-  analyse_file: C:/Users/WINDOWS/GithubProject/SAST_AI/default_project.d2fa80e5.checker.json
+  analyse_file: null
   source_root: C:/Users/WINDOWS/Desktop/demo_app
 providers:
   api_keys:

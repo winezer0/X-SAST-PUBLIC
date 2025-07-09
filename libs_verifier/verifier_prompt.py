@@ -1,0 +1,27 @@
+def build_prompt_sample(search_code):
+    prompt = """
+你是一名专业的网络安全代码审计工程师，请详细分析以下文件的代码片段是否存在对应的安全漏洞。
+================
+代码片段: 
+$SEARCH_CODE$
+================
+请严格按照以下JSON格式返回分析结果：
+{
+  "verify": "利用漏洞的概率评分(限定$VerifyStatus$)",
+  "sensitive": "提取代码片段中的实际存在的敏感数据(例如密钥信息,个人信息等)",
+  "http_poc": "漏洞POC(仅允许返回一个或多个HTTP请求报文格式POC)",
+  "because": "描述你的评分依据",
+  "explain": ""简单的漏洞解释",
+  "repair": "简单的修复建议"
+}
+
+注意事项:
+1.如果存在敏感数据,但没有HTTP报文POC时,提供访问文件的URL.
+2.如果没有发现漏洞,对应的项可以返回null值或0值
+3.仔细分析漏洞代码中的可控变量是否与漏洞拥有强相关性.
+4.在进行漏洞分析时请忽略被注释的代码.
+5.使用中文回复
+================"""
+    if search_code:
+        return prompt.replace("$SEARCH_CODE$", search_code)
+    return None

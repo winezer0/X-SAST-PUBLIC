@@ -5,7 +5,6 @@ class AIProviders(Enum):
     PROMPTS = "prompts"
     PROVIDERS = "providers"
 
-
 class AIProvider(Enum):
     PROVIDER_NAME = "provider_name"
     BASE_URL = "base_url"
@@ -14,16 +13,6 @@ class AIProvider(Enum):
 
     API_KEY = "api_key"
     CLIENT = "client"
-
-
-class AIModelKeys(Enum):
-    NAME = "name"
-    CREATED = "created"
-    OBJECT = "object"
-    OWNED_BY = "owned_by"
-    DELAY = "delay"         # 自定义的 记录延时
-    USABLE = "usable"       # 自定义的  是否可用
-    STREAM = "stream"       # 自定义的  是否需要流模式
 
 class VerifyKeys(Enum):
     # AI Verify key
@@ -43,9 +32,6 @@ class VerifyKeys(Enum):
     SENSITIVE = "sensitive"
     EXPLAIN = "explain"
     REPAIR = "repair"
-
-
-
 
 class VerifyStatus(Enum):
     """风险级别枚举"""

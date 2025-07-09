@@ -27,7 +27,7 @@ def get_random_client(ai_clients:list):
     return random.choice(list(ai_clients))
 
 
-def query_model(ai_client: Any, model_name: str, content: str, stream: bool = False):
+def query_model(ai_client: Any, model_name: str, content: str, time_out:int, stream: bool = False):
     """ 发送查询到模型（支持普通/流式模式）"""
     try:
         start_time = time.time()
@@ -35,7 +35,8 @@ def query_model(ai_client: Any, model_name: str, content: str, stream: bool = Fa
         response = ai_client.chat.completions.create(
             model=model_name,
             messages=[{"role": "user", "content": content}],
-            stream=stream
+            stream=stream,
+            timeout=time_out
         )
         if stream:
             # 流式模式

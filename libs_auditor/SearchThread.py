@@ -30,7 +30,7 @@ class SearchThread(QThread):
             while self.is_running and (time.time() - start_time) < self.TIMEOUT:
                 try:
                     search_text = build_prompt_sample(self.search_text)
-                    response, query_time, error_msg = query_model(random_client, self.ai_model_name, search_text, stream=False)
+                    response, query_time, error_msg = query_model(random_client, self.ai_model_name, search_text, 120, stream=False)
                     elapsed_time = time.time() - start_time
                     self.finished.emit(True, response, elapsed_time)
                     return

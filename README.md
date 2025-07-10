@@ -126,6 +126,8 @@ X-SAST 专为以下用户设计：
 
 NOVASEC微信公众号或通过社交信息联系【酒零】
 
+![NOVASEC0](https://raw.githubusercontent.com/winezer0/mypics/refs/heads/main/NOVASEC0.jpg)
+
 ---
 
 *X-SAST - 为安全专业人员打造的新一代快速代码审计利器*

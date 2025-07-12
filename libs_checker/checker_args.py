@@ -12,11 +12,11 @@ def parse_check_args():
 
     # 性能配置
     parser.add_argument('-w', '--workers', type=int, default=None, help='线程数 (默认：CPU数)')
-    parser.add_argument('-l', '--limit-size', type=int, default=2, help='限制检查文件大小')
+    parser.add_argument('-l', '--limit-size', type=int, default=2, help='限制检查文件大小 (默认：2MB)')
     parser.add_argument('-o', '--output', default=None, help='自定义输出文件路径')
     # 性能配置
     parser.add_argument('-s', '--save-cache', action='store_false', default=True,  help='缓存分析结果  (默认: True)')
-    parser.add_argument('-k', '--chunk-mode', action='store_true', default=False,  help='分块读取文件 (默认: False)')
+    parser.add_argument('-k', '--chunk-mode', action='store_false', default=True,  help='分块读取文件 (默认: True)')
     # 过滤配置
     parser.add_argument('-E', '--exclude-keys', nargs='+', default=DEF_EXCLUDES_KEYS, help=f'扫描排除路径关键字 (默认:{DEF_EXCLUDES_KEYS})')
     parser.add_argument('-e', '--exclude-ext', nargs='+', default=DEF_EXCLUDES_EXT, help=f'扫描排除文件后缀 (默认:{DEF_EXCLUDES_EXT})')

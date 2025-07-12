@@ -1,4 +1,5 @@
 import re
+import time
 from typing import Dict
 
 from libs_checker.checker_enum import CheckerKeys
@@ -42,12 +43,13 @@ def scan_task_rule(content: str, task_info: Dict) -> Dict:
             # 为查找结果计算HASH信息 不然后面无法合并和去重结果数据
             checker_result[CheckerKeys.CHECKER_HASH.value] = calc_checker_result_hash(checker_result)
             match_infos.append(checker_result)
-    except re.error as e:
-        print(f"正则表达式错误 in {task_info[RuleKeys.RULE_NAME.value]}: {str(e)}")
+    except Exception as error:
+        print(f"正则表达式错误 in {task_info[RuleKeys.RULE_NAME.value]}: {str(error)}")
     return match_infos
 
 
 def _check_file(task_hash : str, task_info:dict, project_root: str, chunk_mode: bool):
+    start_time = time.time()
     relative_path = task_info[CheckerKeys.FILE.value]
     absolute_path = get_absolute_path(relative_path, project_root)
     # 处理需要扫描的规则
@@ -65,6 +67,12 @@ def _check_file(task_hash : str, task_info:dict, project_root: str, chunk_mode: 
             checked_result = scan_task_rule(content, task_info)
             task_matches.extend(checked_result)
     except Exception as error:
-        print(f"规则扫描出错: {relative_path} -> Error: {str(error)}")
-        raise error
+        rule_name = task_info.get(RuleKeys.RULE_NAME.value, '未知规则')
+        print(f"规则扫描出错: {relative_path} -> 规则: {rule_name} -> Error: {str(error)}")
+
+    elapsed_time = time.time() - start_time
+    if elapsed_time > 1:  # 只打印耗时超过1秒的任务
+        rule_name = task_info.get(RuleKeys.RULE_NAME.value, '未知规则')
+        print(f"扫描耗时较长 -> 文件: {relative_path}, 规则: {rule_name}, 耗时: {elapsed_time:.2f}s")
+
     return task_hash, task_matches

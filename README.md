@@ -1,5 +1,13 @@
 # X-SAST 专业多语言代码安全审计工具套件
 ![X9](./doc/X-SAST.png)
+
+
+## 免责声明
+继续阅读文章或使用工具视为您已同意NOVASEC免责声明
+
+[NOVASEC免责声明](https://mp.weixin.qq.com/s/iRWRVxkYu7Fx5unxA34I7g)
+
+
 ## 项目背景
 
 在渗透测试和安全评估过程中，高效快速的代码审计是一项关键能力。
@@ -119,12 +127,10 @@ X-SAST 专为以下用户设计：
 4. **社区论坛** 参与社区讨论，与其他成员交流经验和心得。
 5. **活动优惠** 享受专属折扣和优惠，使用我们的其他产品和服务时更加划算。
 
-
+![Fenchuan](https://raw.githubusercontent.com/winezer0/mypics/refs/heads/main/fenchuan1.jpg)
 ## 联系方式
 
-如需获取更多信息、技术支持或定制服务，请通过以下方式联系我们：
-
-NOVASEC微信公众号或通过社交信息联系【酒零】
+如需获取更多信息、技术支持或定制服务，请通过以下方式联系我们：NOVASEC微信公众号或通过社交信息联系【酒零】
 
 ![NOVASEC0](https://raw.githubusercontent.com/winezer0/mypics/refs/heads/main/NOVASEC0.jpg)
 

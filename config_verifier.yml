@@ -48,3 +48,8 @@ providers:
     base_url: "http://192.168.210.5/v1"
     api_keys:
       - "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx1"
+
+
+license_info:
+  program: X-SAST
+  license: ABC123

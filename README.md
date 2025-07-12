@@ -127,7 +127,7 @@ X-SAST 专为以下用户设计：
 4. **社区论坛** 参与社区讨论，与其他成员交流经验和心得。
 5. **活动优惠** 享受专属折扣和优惠，使用我们的其他产品和服务时更加划算。
 
-
+![Fenchuan](https://raw.githubusercontent.com/winezer0/mypics/refs/heads/main/fenchuan0.jpg)
 ## 联系方式
 
 如需获取更多信息、技术支持或定制服务，请通过以下方式联系我们：NOVASEC微信公众号或通过社交信息联系【酒零】
